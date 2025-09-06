@@ -100,30 +100,39 @@
     }
     .card i { font-size: 2rem; margin-bottom: 10px; display: block; }
     canvas { margin-top: 20px; }
+
+    /* Toasts */
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast {
-      background: rgba(0,0,0,0.8);
-      color: #fff;
       padding: 15px 20px;
       margin-top: 10px;
       border-radius: 8px;
       font-size: 1rem;
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
       animation: fadeInOut 3s forwards;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
+    .toast.success { background: rgba(0, 200, 100, 0.9); }
+    .toast.error { background: rgba(200, 50, 50, 0.9); animation: shake 0.5s ease-in-out, fadeInOut 3s forwards; }
+    .toast i { font-size: 1.2rem; }
+
     @keyframes fadeInOut {
       0% {opacity: 0; transform: translateY(-10px);}
       10% {opacity: 1; transform: translateY(0);}
       90% {opacity: 1;}
       100% {opacity: 0; transform: translateY(-10px);}
     }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
     @media (max-width: 768px) {
-      .sidebar {
-        position: fixed;
-        top: 0; left: 0;
-        height: 100%;
-        transform: translateX(-100%);
-      }
+      .sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); }
       .sidebar.active { transform: translateX(0); }
       .hamburger { display: block; }
       body { flex-direction: column; }
@@ -187,11 +196,11 @@ async function api(payload){
   });
   return res.json();
 }
-function showToast(message){
+function showToast(type, message){
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.innerText = message;
+  toast.className = 'toast ' + type;
+  toast.innerHTML = type === 'success' ? `<i class="fa-solid fa-circle-check"></i> ${message}` : `<i class="fa-solid fa-triangle-exclamation"></i> ${message}`;
   container.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
@@ -214,7 +223,7 @@ async function refreshDashboard(){
     if(res.inventory !== undefined) document.getElementById('invCount').innerText = res.inventory;
     if(res.staff !== undefined) document.getElementById('staffCount').innerText = res.staff;
     updateChart(res.inventory || 0, res.staff || 0);
-  } catch (e){ showToast('Error fetching counts'); }
+  } catch (e){ showToast('error','Error fetching counts'); }
 }
 function updateChart(inventory, staff){
   const ctx = document.getElementById('dashboardChart').getContext('2d');
@@ -230,15 +239,15 @@ document.getElementById('addItemBtn').addEventListener('click', async () => {
   const name = document.getElementById('itemName').value;
   const price = document.getElementById('itemPrice').value;
   const res = await api({action:'addInventory', name: name, price: price, secret: secret});
-  showToast(JSON.stringify(res));
-  refreshDashboard();
+  if(res.status === 'done'){ showToast('success','Item added successfully!'); refreshDashboard(); }
+  else { showToast('error','Unauthorized or failed!'); }
 });
 document.getElementById('addStaffBtn').addEventListener('click', async () => {
   const secret = document.getElementById('secret').value;
   const name = document.getElementById('staffName').value;
   const res = await api({action:'addStaff', name: name, secret: secret});
-  showToast(JSON.stringify(res));
-  refreshDashboard();
+  if(res.status === 'done'){ showToast('success','Staff added successfully!'); refreshDashboard(); }
+  else { showToast('error','Unauthorized or failed!'); }
 });
 refreshDashboard();
 </script>
