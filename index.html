@@ -1,23 +1,180 @@
 <!doctype html>
 <html>
-<head><meta charset="utf-8"><title>Manager — Inventory & Staff</title></head>
+<head>
+  <meta charset="utf-8">
+  <title>Manager — Inventory & Staff</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1f1c2c, #928dab);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 250px;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+      transition: transform 0.3s ease;
+    }
+    .sidebar h1 { font-size: 1.5rem; text-align: center; margin-bottom: 30px; }
+    .nav-btn {
+      padding: 15px;
+      margin: 10px 0;
+      font-size: 1.1rem;
+      background: linear-gradient(90deg, #4e54c8, #8f94fb);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-btn i { font-size: 1.2rem; }
+    .nav-btn:hover { background: linear-gradient(90deg, #6a11cb, #2575fc); transform: scale(1.05); }
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      font-size: 1.8rem;
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      z-index: 10000;
+    }
+    .main { flex: 1; padding: 30px; display: flex; flex-direction: column; align-items: center; }
+    .panel {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 30px;
+      margin: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      width: 90%;
+      max-width: 600px;
+    }
+    h2 { text-align: center; margin-bottom: 15px; }
+    label { display: block; margin: 15px 0; font-size: 1.1rem; }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    button.action-btn {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin-top: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(90deg, #4e54c8, #8f94fb);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    button.action-btn:hover { background: linear-gradient(90deg, #6a11cb, #2575fc); transform: scale(1.05); }
+    .dashboard { display: flex; justify-content: space-around; gap: 20px; flex-wrap: wrap; }
+    .card {
+      flex: 1; min-width: 180px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .card i { font-size: 2rem; margin-bottom: 10px; display: block; }
+    canvas { margin-top: 20px; }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    .toast {
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 15px 20px;
+      margin-top: 10px;
+      border-radius: 8px;
+      font-size: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      animation: fadeInOut 3s forwards;
+    }
+    @keyframes fadeInOut {
+      0% {opacity: 0; transform: translateY(-10px);}
+      10% {opacity: 1; transform: translateY(0);}
+      90% {opacity: 1;}
+      100% {opacity: 0; transform: translateY(-10px);}
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        height: 100%;
+        transform: translateX(-100%);
+      }
+      .sidebar.active { transform: translateX(0); }
+      .hamburger { display: block; }
+      body { flex-direction: column; }
+      .main { padding: 60px 15px 15px; }
+    }
+  </style>
+</head>
 <body>
-  <h1>Manager Panel</h1>
-  <p>Use your secret to operate (keep it private)</p>
+  <button class="hamburger" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+  <div class="sidebar" id="sidebar">
+    <h1>🏨 Manager</h1>
+    <button class="nav-btn" onclick="showPanel('dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</button>
+    <button class="nav-btn" onclick="showPanel('inventory')"><i class="fa-solid fa-box"></i> Inventory</button>
+    <button class="nav-btn" onclick="showPanel('staff')"><i class="fa-solid fa-users"></i> Staff</button>
+    <button class="nav-btn" onclick="showPanel('secret')"><i class="fa-solid fa-key"></i> Secret</button>
+  </div>
 
-  <label>Manager secret: <input id="secret" type="password"></label>
+  <div class="main">
+    <div class="panel" id="dashboardPanel">
+      <h2>📊 Dashboard Overview</h2>
+      <div class="dashboard">
+        <div class="card"><i class="fa-solid fa-box"></i> Inventory: <span id="invCount">0</span></div>
+        <div class="card"><i class="fa-solid fa-users"></i> Staff: <span id="staffCount">0</span></div>
+      </div>
+      <canvas id="dashboardChart" width="400" height="200"></canvas>
+    </div>
 
-  <h2>Add item</h2>
-  <label>Item: <input id="itemName"></label>
-  <label>Price: <input id="itemPrice" type="number" step="0.01"></label>
-  <button id="addItemBtn">Add Inventory</button>
+    <div class="panel" id="secretPanel" style="display:none;">
+      <h2>🔑 Manager Secret</h2>
+      <label>Manager secret: <input id="secret" type="password"></label>
+    </div>
 
-  <h2>Add staff</h2>
-  <label>Name: <input id="staffName"></label>
-  <button id="addStaffBtn">Add Staff</button>
+    <div class="panel" id="inventoryPanel" style="display:none;">
+      <h2>➕ Add Inventory</h2>
+      <label>Item: <input id="itemName"></label>
+      <label>Price: <input id="itemPrice" type="number" step="0.01"></label>
+      <button class="action-btn" id="addItemBtn">Add Inventory</button>
+    </div>
+
+    <div class="panel" id="staffPanel" style="display:none;">
+      <h2>👥 Add Staff</h2>
+      <label>Name: <input id="staffName"></label>
+      <button class="action-btn" id="addStaffBtn">Add Staff</button>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
 
 <script>
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzPMEFjP9zxhUHQ8HxgkMRJSP6GFQFIlQ4JTVo2ghNygK__FvYakEdEX6-JiLiVwgZjmw/exec'; // same webapp
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzPMEFjP9zxhUHQ8HxgkMRJSP6GFQFIlQ4JTVo2ghNygK__FvYakEdEX6-JiLiVwgZjmw/exec';
+let chart;
 
 function encodeForm(data) {
   return new URLSearchParams(data).toString();
@@ -30,21 +187,60 @@ async function api(payload){
   });
   return res.json();
 }
+function showToast(message){
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerText = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+function showPanel(panel){
+  document.getElementById('dashboardPanel').style.display = 'none';
+  document.getElementById('inventoryPanel').style.display = 'none';
+  document.getElementById('staffPanel').style.display = 'none';
+  document.getElementById('secretPanel').style.display = 'none';
+  document.getElementById(panel+"Panel").style.display = 'block';
+  if(panel === 'dashboard') refreshDashboard();
+  closeSidebar();
+}
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('active'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('active'); }
 
+async function refreshDashboard(){
+  const secret = document.getElementById('secret').value;
+  try {
+    const res = await api({action:'getCounts', secret: secret});
+    if(res.inventory !== undefined) document.getElementById('invCount').innerText = res.inventory;
+    if(res.staff !== undefined) document.getElementById('staffCount').innerText = res.staff;
+    updateChart(res.inventory || 0, res.staff || 0);
+  } catch (e){ showToast('Error fetching counts'); }
+}
+function updateChart(inventory, staff){
+  const ctx = document.getElementById('dashboardChart').getContext('2d');
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: ['Inventory', 'Staff'], datasets: [{ label: 'Counts', data: [inventory, staff], backgroundColor: ['#4e54c8', '#8f94fb'] }] },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
 document.getElementById('addItemBtn').addEventListener('click', async () => {
   const secret = document.getElementById('secret').value;
   const name = document.getElementById('itemName').value;
   const price = document.getElementById('itemPrice').value;
   const res = await api({action:'addInventory', name: name, price: price, secret: secret});
-  alert(JSON.stringify(res));
+  showToast(JSON.stringify(res));
+  refreshDashboard();
 });
-
 document.getElementById('addStaffBtn').addEventListener('click', async () => {
   const secret = document.getElementById('secret').value;
   const name = document.getElementById('staffName').value;
   const res = await api({action:'addStaff', name: name, secret: secret});
-  alert(JSON.stringify(res));
+  showToast(JSON.stringify(res));
+  refreshDashboard();
 });
+refreshDashboard();
 </script>
 </body>
 </html>
