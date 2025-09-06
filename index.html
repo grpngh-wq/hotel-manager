@@ -1,58 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Hotel Manager Dashboard</title>
-</head>
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Manager — Inventory & Staff</title></head>
 <body>
-  <h1>Manager Dashboard</h1>
+  <h1>Manager Panel</h1>
+  <p>Use your secret to operate (keep it private)</p>
 
-  <!-- Manager controls -->
-  <div id="managerApp">
-    <h2>Welcome Manager!</h2>
+  <label>Manager secret: <input id="secret" type="password"></label>
 
-    <form id="inventoryForm">
-      <label>Worker Name:</label>
-      <input type="text" id="workerName" required>
-      <br><br>
+  <h2>Add item</h2>
+  <label>Item: <input id="itemName"></label>
+  <label>Price: <input id="itemPrice" type="number" step="0.01"></label>
+  <button id="addItemBtn">Add Inventory</button>
 
-      <label>Item Name:</label>
-      <input type="text" id="itemName" required>
-      <br><br>
+  <h2>Add staff</h2>
+  <label>Name: <input id="staffName"></label>
+  <button id="addStaffBtn">Add Staff</button>
 
-      <label>Item Price (€):</label>
-      <input type="number" step="0.01" id="itemPrice" required>
-      <br><br>
+<script>
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzPMEFjP9zxhUHQ8HxgkMRJSP6GFQFIlQ4JTVo2ghNygK__FvYakEdEX6-JiLiVwgZjmw/exec'; // same webapp
 
-      <button type="submit">Add Item</button>
-    </form>
+function encodeForm(data) {
+  return new URLSearchParams(data).toString();
+}
+async function api(payload){
+  const res = await fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: encodeForm(payload)
+  });
+  return res.json();
+}
 
-    <p id="status"></p>
-  </div>
+document.getElementById('addItemBtn').addEventListener('click', async () => {
+  const secret = document.getElementById('secret').value;
+  const name = document.getElementById('itemName').value;
+  const price = document.getElementById('itemPrice').value;
+  const res = await api({action:'addInventory', name: name, price: price, secret: secret});
+  alert(JSON.stringify(res));
+});
 
-  <script>
-    // Submit new worker/item to Google Sheet backend
-    document.getElementById('inventoryForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const data = {
-        worker: document.getElementById('workerName').value,
-        item: document.getElementById('itemName').value,
-        price: parseFloat(document.getElementById('itemPrice').value)
-      };
-
-      fetch("https://script.google.com/macros/s/AKfycbzPMEFjP9zxhUHQ8HxgkMRJSP6GFQFIlQ4JTVo2ghNygK__FvYakEdEX6-JiLiVwgZjmw/exec", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(res => res.text())
-      .then(msg => {
-        document.getElementById('status').innerText = "✅ Item added!";
-      })
-      .catch(err => {
-        document.getElementById('status').innerText = "❌ Error adding item!";
-      });
-    });
-  </script>
+document.getElementById('addStaffBtn').addEventListener('click', async () => {
+  const secret = document.getElementById('secret').value;
+  const name = document.getElementById('staffName').value;
+  const res = await api({action:'addStaff', name: name, secret: secret});
+  alert(JSON.stringify(res));
+});
+</script>
 </body>
 </html>
